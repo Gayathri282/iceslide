@@ -1,6 +1,7 @@
 /* ==========================================
    ICE SLIDE - Child-Friendly Canvas Game Engine
    Full-screen playgrid responsive on Mobile & Desktop
+   Features compact obstacles and auto-pause on close/blur
    ========================================== */
 
 (function () {
@@ -107,7 +108,7 @@
   }
 
   /* ---------- Game State ---------- */
-  var STATE_TITLE = 0, STATE_PLAY = 1, STATE_OVER = 2;
+  var STATE_TITLE = 0, STATE_PLAY = 1, STATE_OVER = 2, STATE_PAUSED = 3;
   var state = STATE_TITLE;
 
   var player, obstacles, fish, particles, popups;
@@ -154,6 +155,7 @@
     }
   }
 
+  /* REDUCED OBSTACLE SIZES FOR CHILD-FRIENDLY & FAIR GAMEPLAY */
   function spawnObstacle(forceX) {
     var t = TIERS[tier];
     var pool = ['rock', 'rock', 'seal'];
@@ -164,10 +166,11 @@
     var x = forceX != null ? forceX : W + 60;
     var o = { type: type, x: x };
 
-    if (type === 'rock') { o.w = 30; o.h = 26; }
-    else if (type === 'seal') { o.w = 44; o.h = 30; o.phase = Math.random() * 6.28; }
-    else if (type === 'snowman') { o.w = 34; o.h = 82; }
-    else if (type === 'hole') { o.w = 55 + Math.random() * 20; o.h = 0; }
+    // Reduced obstacle width and height
+    if (type === 'rock') { o.w = 20; o.h = 16; }
+    else if (type === 'seal') { o.w = 30; o.h = 20; o.phase = Math.random() * 6.28; }
+    else if (type === 'snowman') { o.w = 22; o.h = 50; }
+    else if (type === 'hole') { o.w = 38 + Math.random() * 10; o.h = 0; }
 
     obstacles.push(o);
     return o;
@@ -177,7 +180,7 @@
     var elevated = Math.random() < 0.42;
     fish.push({
       x: forceX != null ? forceX : W + 40,
-      h: elevated ? 62 + Math.random() * 38 : 8,
+      h: elevated ? 52 + Math.random() * 32 : 8,
       elevated: elevated,
       got: 0,
       phase: Math.random() * 6.28
@@ -266,7 +269,7 @@
         if (o.type === 'hole') {
           if (player.footY < 6) return crash();
         } else {
-          if (player.footY < o.h - 4) return crash();
+          if (player.footY < o.h - 3) return crash();
         }
       }
     }
@@ -472,7 +475,7 @@
     ctx.restore();
   }
 
-  // Draw Obstacles
+  // Draw Compact Obstacles
   function drawObstacle(o) {
     var gx = o.x;
     var gy = groundY;
@@ -480,18 +483,18 @@
     if (o.type === 'hole') {
       ctx.fillStyle = 'rgba(10, 80, 130, 0.4)';
       ctx.beginPath();
-      ctx.ellipse(gx + o.w / 2, gy + 7, o.w / 2 + 5, 15, 0, 0, 6.2832);
+      ctx.ellipse(gx + o.w / 2, gy + 5, o.w / 2 + 4, 11, 0, 0, 6.2832);
       ctx.fill();
 
       ctx.fillStyle = '#0b4a72';
       ctx.beginPath();
-      ctx.ellipse(gx + o.w / 2, gy + 7, o.w / 2 - 2, 10, 0, 0, 6.2832);
+      ctx.ellipse(gx + o.w / 2, gy + 5, o.w / 2 - 2, 7, 0, 0, 6.2832);
       ctx.fill();
 
       ctx.strokeStyle = '#7cd6f8';
-      ctx.lineWidth = 1.5;
+      ctx.lineWidth = 1.2;
       ctx.beginPath();
-      ctx.ellipse(gx + o.w / 2, gy + 6, o.w * 0.3, 4, 0, 0, 6.2832);
+      ctx.ellipse(gx + o.w / 2, gy + 4, o.w * 0.3, 3, 0, 0, 6.2832);
       ctx.stroke();
 
     } else if (o.type === 'rock') {
@@ -502,24 +505,24 @@
       ctx.fillStyle = g;
       ctx.beginPath();
       ctx.moveTo(gx, gy);
-      ctx.lineTo(gx + 3, gy - o.h * 0.7);
+      ctx.lineTo(gx + 2, gy - o.h * 0.7);
       ctx.lineTo(gx + o.w * 0.45, gy - o.h);
-      ctx.lineTo(gx + o.w - 3, gy - o.h * 0.65);
+      ctx.lineTo(gx + o.w - 2, gy - o.h * 0.65);
       ctx.lineTo(gx + o.w, gy);
       ctx.closePath();
       ctx.fill();
 
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(gx + o.w * 0.3, gy - o.h * 0.7, 2, 0, 6.2832);
+      ctx.arc(gx + o.w * 0.3, gy - o.h * 0.7, 1.5, 0, 6.2832);
       ctx.fill();
 
     } else if (o.type === 'seal') {
-      var bob = Math.sin(tclock * 3.5 + o.phase) * 2.5;
+      var bob = Math.sin(tclock * 3.5 + o.phase) * 2;
 
       ctx.fillStyle = 'rgba(15, 50, 80, 0.16)';
       ctx.beginPath();
-      ctx.ellipse(gx + o.w / 2, gy + 4, o.w * 0.5, 6, 0, 0, 6.2832);
+      ctx.ellipse(gx + o.w / 2, gy + 3, o.w * 0.5, 5, 0, 0, 6.2832);
       ctx.fill();
 
       var g2 = ctx.createLinearGradient(0, gy - o.h, 0, gy);
@@ -537,18 +540,18 @@
 
       ctx.fillStyle = '#0f172a';
       ctx.beginPath();
-      ctx.arc(gx + o.w * 0.75, gy - o.h * 0.58 + bob, 2.2, 0, 6.2832);
+      ctx.arc(gx + o.w * 0.75, gy - o.h * 0.58 + bob, 1.8, 0, 6.2832);
       ctx.fill();
 
       ctx.fillStyle = '#ffffff';
       ctx.beginPath();
-      ctx.arc(gx + o.w * 0.77, gy - o.h * 0.62 + bob, 0.9, 0, 6.2832);
+      ctx.arc(gx + o.w * 0.77, gy - o.h * 0.62 + bob, 0.7, 0, 6.2832);
       ctx.fill();
 
     } else if (o.type === 'snowman') {
       ctx.fillStyle = 'rgba(15, 50, 80, 0.16)';
       ctx.beginPath();
-      ctx.ellipse(gx + o.w / 2, gy + 4, o.w * 0.62, 7, 0, 0, 6.2832);
+      ctx.ellipse(gx + o.w / 2, gy + 3, o.w * 0.62, 5, 0, 0, 6.2832);
       ctx.fill();
 
       ctx.fillStyle = '#ffffff';
@@ -557,31 +560,31 @@
       ctx.beginPath(); ctx.arc(gx + o.w / 2, gy - o.h * 0.90, o.w * 0.28, 0, 6.2832); ctx.fill();
 
       ctx.fillStyle = '#ff477e';
-      ctx.fillRect(gx + o.w / 2 - 12, gy - o.h * 0.75, 24, 5);
+      ctx.fillRect(gx + o.w / 2 - 8, gy - o.h * 0.75, 16, 3.5);
 
       var armAngle = Math.sin(tclock * 4) * 0.3;
       ctx.strokeStyle = '#78350f';
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 1.8;
       ctx.beginPath();
-      ctx.moveTo(gx + o.w / 2 + 10, gy - o.h * 0.62);
-      ctx.lineTo(gx + o.w / 2 + 22, gy - o.h * 0.7 + Math.sin(armAngle) * 6);
+      ctx.moveTo(gx + o.w / 2 + 7, gy - o.h * 0.62);
+      ctx.lineTo(gx + o.w / 2 + 15, gy - o.h * 0.7 + Math.sin(armAngle) * 4);
       ctx.stroke();
 
       ctx.fillStyle = '#1e293b';
-      ctx.fillRect(gx + o.w / 2 - 12, gy - o.h * 1.02, 24, 4);
-      ctx.fillRect(gx + o.w / 2 - 8, gy - o.h * 1.2, 16, 12);
+      ctx.fillRect(gx + o.w / 2 - 9, gy - o.h * 1.02, 18, 3);
+      ctx.fillRect(gx + o.w / 2 - 6, gy - o.h * 1.2, 12, 9);
 
       ctx.fillStyle = '#ff9f1c';
       ctx.beginPath();
       ctx.moveTo(gx + o.w / 2, gy - o.h * 0.90);
-      ctx.lineTo(gx + o.w / 2 + 12, gy - o.h * 0.88);
+      ctx.lineTo(gx + o.w / 2 + 9, gy - o.h * 0.88);
       ctx.lineTo(gx + o.w / 2, gy - o.h * 0.84);
       ctx.closePath(); ctx.fill();
 
       ctx.fillStyle = '#0f172a';
       ctx.beginPath();
-      ctx.arc(gx + o.w / 2 - 4, gy - o.h * 0.93, 1.8, 0, 6.2832);
-      ctx.arc(gx + o.w / 2 + 4, gy - o.h * 0.93, 1.8, 0, 6.2832);
+      ctx.arc(gx + o.w / 2 - 3, gy - o.h * 0.93, 1.3, 0, 6.2832);
+      ctx.arc(gx + o.w / 2 + 3, gy - o.h * 0.93, 1.3, 0, 6.2832);
       ctx.fill();
     }
   }
@@ -736,7 +739,7 @@
     ctx.globalAlpha = 1;
 
     // In-game HUD
-    if (state === STATE_PLAY) {
+    if (state === STATE_PLAY || state === STATE_PAUSED) {
       ctx.fillStyle = '#16537e';
       ctx.font = '700 42px Fredoka, sans-serif';
       ctx.fillText(String(score), W / 2, 58);
@@ -772,14 +775,16 @@
     last = ts;
 
     if (state === STATE_PLAY) step(dt);
-    else ambient(dt);
+    else if (state === STATE_TITLE || state === STATE_OVER) ambient(dt);
 
     render();
   }
 
-  /* ---------- UI CONTROLLER ---------- */
+  /* ---------- UI & PAUSE CONTROLLER ---------- */
   var titleEl = document.getElementById('title');
   var overEl = document.getElementById('over');
+  var pauseEl = document.getElementById('pause');
+  var pauseBtn = document.getElementById('pauseBtn');
   var overCard = document.getElementById('overCard');
   var overTitle = document.getElementById('overTitle');
   var finalEl = document.getElementById('finalScore');
@@ -800,11 +805,40 @@
     state = STATE_PLAY;
     titleEl.classList.add('hidden');
     overEl.classList.add('hidden');
+    pauseEl.classList.add('hidden');
+    pauseBtn.classList.remove('hidden');
+    pauseBtn.textContent = '⏸️';
     last = 0;
+  }
+
+  function pauseGame() {
+    if (state === STATE_PLAY) {
+      state = STATE_PAUSED;
+      if (window.IceAudio) window.IceAudio.stopMusic();
+      pauseEl.classList.remove('hidden');
+      pauseBtn.textContent = '▶️';
+    }
+  }
+
+  function resumeGame() {
+    if (state === STATE_PAUSED) {
+      state = STATE_PLAY;
+      if (window.IceAudio) window.IceAudio.startMusic();
+      pauseEl.classList.add('hidden');
+      pauseBtn.textContent = '⏸️';
+      last = 0;
+    }
+  }
+
+  function togglePause() {
+    if (state === STATE_PLAY) pauseGame();
+    else if (state === STATE_PAUSED) resumeGame();
   }
 
   function gameOver() {
     state = STATE_OVER;
+    pauseBtn.classList.add('hidden');
+    if (window.IceAudio) window.IceAudio.stopMusic();
     if (score > best) {
       best = score;
       try { localStorage.setItem('ice_best', String(best)); } catch (e) {}
@@ -832,10 +866,36 @@
     startGame();
   });
 
+  document.getElementById('resumeBtn').addEventListener('click', function (e) {
+    e.stopPropagation();
+    resumeGame();
+  });
+
+  pauseBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    togglePause();
+  });
+
   overEl.addEventListener('pointerdown', function () {
     if (state === STATE_OVER && Date.now() - overShownAt > 450) {
       startGame();
     }
+  });
+
+  /* ---------- PAUSE ON CLOSE / BLUR / VISIBILITY CHANGE ---------- */
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden) {
+      pauseGame();
+    }
+    last = 0;
+  });
+
+  window.addEventListener('blur', function () {
+    pauseGame();
+  });
+
+  window.addEventListener('pagehide', function () {
+    if (window.IceAudio) window.IceAudio.stopMusic();
   });
 
   /* ---------- INPUT HANDLING ---------- */
@@ -843,20 +903,28 @@
     if (window.IceAudio) window.IceAudio.init();
     if (state === STATE_PLAY) {
       doJump();
+    } else if (state === STATE_PAUSED) {
+      resumeGame();
     }
     e.preventDefault();
   });
 
   window.addEventListener('keydown', function (e) {
+    if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
+      togglePause();
+      e.preventDefault();
+      return;
+    }
+
     if (e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowUp') {
       if (window.IceAudio) window.IceAudio.init();
       if (state === STATE_PLAY) doJump();
+      else if (state === STATE_PAUSED) resumeGame();
       else startGame();
       e.preventDefault();
     }
   });
 
-  document.addEventListener('visibilitychange', function () { last = 0; });
   window.addEventListener('contextmenu', function (e) { e.preventDefault(); });
 
   /* ---------- BOOT ---------- */

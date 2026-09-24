@@ -19,6 +19,9 @@
   <!-- Fullscreen Responsive Playgrid Canvas -->
   <canvas id="c"></canvas>
 
+  <!-- Pause Button for HUD -->
+  <button id="pauseBtn" class="hidden" aria-label="Pause Game">⏸️</button>
+
   <!-- Title Screen Layer -->
   <div class="layer" id="title">
     <div class="card fade">
@@ -37,6 +40,16 @@
         <div>🐟 Fish</div>
         <div>⭐ Stars</div>
       </div>
+    </div>
+  </div>
+
+  <!-- Pause Screen Layer -->
+  <div class="layer hidden" id="pause">
+    <div class="card fade">
+      <h2 style="font-size: 32px; color: #16537e; margin: 0 0 10px;">⏸️ Game Paused</h2>
+      <p class="blurb">Pip is taking a quick breather on the ice!</p>
+      <button class="btn" id="resumeBtn">▶️ Resume Slide</button>
+      <div class="controls-hint">⌨️ Press <strong>SPACEBAR</strong> or <strong>P</strong> to Resume</div>
     </div>
   </div>
 
